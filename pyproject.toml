@@ -1,0 +1,30 @@
+[build-system]
+requires = [
+    "setuptools==80.7.1",
+    "setuptools_scm==8.3.1",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+name = "lektor-i18n"
+description = ""
+readme = "README.md"
+license = "GPL-3.0-only"
+license-files = ["LICENSE"]
+authors = [
+    {name='NumeriCube', email='support@numericube.com'},
+]
+maintainers = [
+    {name="BeeWare Team", email="team@beeware.org"},
+]
+
+[project.urls]
+Source = 'https://github.com/beeware/lektor-i18n-plugin'
+Tracker = 'https://github.com/beeware/lektor-i18n-plugin/issues'
+
+[project.entry-points."lektor.plugins"]
+i18n = "lektor_i18n:I18NPlugin"
+
+[tool.setuptools_scm]
+# To enable SCM versioning, we need an empty tool configuration for setuptools_scm
