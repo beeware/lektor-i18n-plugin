@@ -108,7 +108,7 @@ This plugin has been tested with `Lektor 3.0.x`.
 
 #### GetText
 
-Both Gettext and Pybabel are required.  
+Both Gettext and Pybabel are required.
 
 For a Debian/Ubuntu system, this means a simple :
 
@@ -145,7 +145,7 @@ On first call, a new `i18n` directory (can be changed in configuration file) wil
 
 This directory will be populated with a single `contents.pot` file, compiling all the sentences found by the plugin. The list of fields eligible to translation is configured in the models/flows definition with `translate=True` added to each field.
 
-For each translation language (still from the configuration file), a `content-<language>.po` file will be created/updated. These are the files that need to be translated with your prefered tool (like [POEdit](http://poedit.net) or [Transifex](http://transifex.com)).
+For each translation language (still from the configuration file), a `content-<language>.po` file will be created/updated. These are the files that need to be translated with your preferred tool (like [POEdit](http://poedit.net) or [Transifex](http://transifex.com)).
 
 All translation files (`contents-*.po`) are then compiled and merged with the original `contents.lr` files to produce all the `contents-<language>.lr` files in their respective directories.
 

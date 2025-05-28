@@ -3,26 +3,26 @@ import collections
 import datetime
 import gettext
 import os
-from os.path import relpath, join, exists, dirname
-from pprint import PrettyPrinter
 import re
 import tempfile
 import time
+from os.path import exists, join, relpath
+from pprint import PrettyPrinter
 from urllib.parse import urljoin
 
-from lektor.pluginsystem import Plugin
+from lektor.context import get_ctx
 from lektor.db import Page
-from lektor.metaformat import tokenize
-from lektor.reporter import reporter
-from lektor.types.flow import FlowType, process_flowblock_data
-from lektor.utils import portable_popen, locate_executable
 from lektor.environment import PRIMARY_ALT
 from lektor.filecontents import FileContents
-from lektor.context import get_ctx
+from lektor.metaformat import tokenize
+from lektor.pluginsystem import Plugin
+from lektor.reporter import reporter
+from lektor.types.flow import FlowType, process_flowblock_data
+from lektor.utils import locate_executable, portable_popen
 
-command_re = re.compile(r'([a-zA-Z0-9.-_]+):\s*(.*?)?\s*$')
+command_re = re.compile(r"([a-zA-Z0-9.-_]+):\s*(.*?)?\s*$")
 # derived from lektor.types.flow but allows more dash signs
-block2re = re.compile(r'^###(#+)\s*([^#]*?)\s*###(#+)\s*$')
+block2re = re.compile(r"^###(#+)\s*([^#]*?)\s*###(#+)\s*$")
 
 POT_HEADER = """msgid ""
 msgstr ""
@@ -41,7 +41,7 @@ msgstr ""
 
 
 def truncate(s, length=32):
-    return (s[:length] + '..') if len(s) > length else s
+    return (s[:length] + "..") if len(s) > length else s
 
 
 # pylint: disable=too-few-public-methods,redefined-variable-type
@@ -59,9 +59,12 @@ class TemplateTranslator(object):
             return super(TemplateTranslator, self).__init__()
         if not self.__lastlang == ctx.locale:
             self.__lastlang = ctx.locale
-            self.translator = gettext.translation("contents",
-                                                  join(self.i18npath, '_compiled'),
-                                                  languages=[ctx.locale], fallback=True)
+            self.translator = gettext.translation(
+                "contents",
+                join(self.i18npath, "_compiled"),
+                languages=[ctx.locale],
+                fallback=True,
+            )
 
     def gettext(self, x):
         self.init_translator()  # language could have changed
@@ -72,7 +75,7 @@ class TemplateTranslator(object):
         return self.translator.ngettext(*x)
 
 
-class Translations():
+class Translations:
     """Memory of translations"""
 
     def __init__(self):
@@ -82,7 +85,7 @@ class Translations():
     def add(self, text, source):
         if text not in self.translations.keys():
             self.translations[text] = []
-            reporter.report_debug_info('added to translation memory: ', truncate(text))
+            reporter.report_debug_info("added to translation memory: ", truncate(text))
         if source not in self.translations[text]:
             self.translations[text].append(source)
 
@@ -91,14 +94,19 @@ class Translations():
 
     def as_pot(self, content_language):
         """returns a POT version of the translation dictionary"""
-        now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
-        now += '+%s' % (time.tzname[0])
-        result = POT_HEADER % {'LANGUAGE': content_language, 'NOW': now}
+        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+        now += "+%s" % (time.tzname[0])
+        result = POT_HEADER % {"LANGUAGE": content_language, "NOW": now}
 
         for msg, paths in self.translations.items():
             if msg:  # Generate msgid/msgstr pair only if content exists
                 result += "#: %s\n" % " ".join(paths)
-                for token, repl in {'\\': '\\\\', '\n': '\\n', '\t': '\\t', '"': '\\"'}.items():
+                for token, repl in {
+                    "\\": "\\\\",
+                    "\n": "\\n",
+                    "\t": "\\t",
+                    '"': '\\"',
+                }.items():
                     msg = msg.replace(token, repl)
                 result += 'msgid "%s"\n' % msg
                 result += 'msgstr ""\n\n'
@@ -107,34 +115,34 @@ class Translations():
     def write_pot(self, pot_filename, language):
         if not os.path.exists(os.path.dirname(pot_filename)):
             os.makedirs(os.path.dirname(pot_filename))
-        with open(pot_filename, 'w') as f:
+        with open(pot_filename, "w") as f:
             f.write(self.as_pot(language))
 
     @staticmethod
     def merge_pot(from_filenames, to_filename):
-        msgcat = locate_executable('msgcat')
+        msgcat = locate_executable("msgcat")
         if msgcat is None:
             msgcat = "/usr/bin/msgcat"
         cmdline = [msgcat, "--use-first"]
         cmdline.extend(from_filenames)
         cmdline.extend(("-o", to_filename))
-        reporter.report_debug_info('msgcat cmd line', cmdline)
+        reporter.report_debug_info("msgcat cmd line", cmdline)
         portable_popen(cmdline).wait()
 
     @staticmethod
     def parse_templates(to_filename):
-        pybabel = locate_executable('pybabel')
+        pybabel = locate_executable("pybabel")
         if pybabel is None:
             pybabel = "/usr/bin/pybabel"
-        cmdline = [pybabel, 'extract', '-F', 'babel.cfg', "-o", to_filename, "./"]
-        reporter.report_debug_info('pybabel cmd line', cmdline)
+        cmdline = [pybabel, "extract", "-F", "babel.cfg", "-o", to_filename, "./"]
+        reporter.report_debug_info("pybabel cmd line", cmdline)
         portable_popen(cmdline).wait()
 
 
 translations = Translations()  # let's have a singleton
 
 
-class POFile():
+class POFile:
     FILENAME_PATTERN = "contents+%s.po"
 
     def __init__(self, language, i18npath):
@@ -148,22 +156,39 @@ class POFile():
 
     def _msg_init(self):
         """Generates the first <language>.po file"""
-        msginit = locate_executable('msginit')
-        cmdline = [msginit, "-i", "contents.pot", "-l", self.language, "-o", self.FILENAME_PATTERN % self.language,
-                   "--no-translator"]
-        reporter.report_debug_info('msginit cmd line', cmdline)
+        msginit = locate_executable("msginit")
+        cmdline = [
+            msginit,
+            "-i",
+            "contents.pot",
+            "-l",
+            self.language,
+            "-o",
+            self.FILENAME_PATTERN % self.language,
+            "--no-translator",
+        ]
+        reporter.report_debug_info("msginit cmd line", cmdline)
         portable_popen(cmdline, cwd=self.i18npath).wait()
 
     def _msg_merge(self):
         """Merges an existing <language>.po file with .pot file"""
-        msgmerge = locate_executable('msgmerge')
-        cmdline = [msgmerge, self.FILENAME_PATTERN % self.language, "contents.pot", "-U", "-N", "--backup=simple"]
-        reporter.report_debug_info('msgmerge cmd line', cmdline)
+        msgmerge = locate_executable("msgmerge")
+        cmdline = [
+            msgmerge,
+            self.FILENAME_PATTERN % self.language,
+            "contents.pot",
+            "-U",
+            "-N",
+            "--backup=simple",
+        ]
+        reporter.report_debug_info("msgmerge cmd line", cmdline)
         portable_popen(cmdline, cwd=self.i18npath).wait()
 
     def _prepare_locale_dir(self):
-        """Prepares the i18n/<language>/LC_MESSAGES/ to store the .mo file; returns the dirname"""
-        directory = join('_compiled', self.language, "LC_MESSAGES")
+        """Prepares the i18n/<language>/LC_MESSAGES/ to store the .mo file;
+        returns the dirname.
+        """
+        directory = join("_compiled", self.language, "LC_MESSAGES")
         try:
             os.makedirs(join(self.i18npath, directory))
         except OSError:
@@ -172,9 +197,14 @@ class POFile():
 
     def _msg_fmt(self, locale_dirname):
         """Compile an existing <language>.po file into a .mo file"""
-        msgfmt = locate_executable('msgfmt')
-        cmdline = [msgfmt, self.FILENAME_PATTERN % self.language, "-o", join(locale_dirname, "contents.mo")]
-        reporter.report_debug_info('msgfmt cmd line', cmdline)
+        msgfmt = locate_executable("msgfmt")
+        cmdline = [
+            msgfmt,
+            self.FILENAME_PATTERN % self.language,
+            "-o",
+            join(locale_dirname, "contents.mo"),
+        ]
+        reporter.report_debug_info("msgfmt cmd line", cmdline)
         portable_popen(cmdline, cwd=self.i18npath).wait()
 
     def generate(self):
@@ -197,23 +227,23 @@ def line_starts_new_block(line, prev_line):
     found in the line before, e.g. it isn't a new block with a key: value pair
     before.
     """
-    if not prev_line or ':' not in prev_line:
+    if not prev_line or ":" not in prev_line:
         return False  # could be a Markdown heading
     line = line.strip()
-    return line == u'-' * len(line) and len(line) >= 3
+    return line == "-" * len(line) and len(line) >= 3
 
 
 def split_paragraphs(document):
     if isinstance(document, (list, tuple)):
-        document = ''.join(document)  # list of lines
-    return re.split('\n(?:\\s*\n){1,}', document)
+        document = "".join(document)  # list of lines
+    return re.split("\n(?:\\s*\n){1,}", document)
 
 
 # We cannot check for unused arguments here, they're mandated by the plugin API.
 # pylint:disable=unused-argument
 class I18NPlugin(Plugin):
-    name = u'i18n'
-    description = u'Internationalisation helper'
+    name = "i18n"
+    description = "Internationalisation helper"
 
     def translate_tag(self, s, *args, **kwargs):
         if not self.enabled:
@@ -221,16 +251,22 @@ class I18NPlugin(Plugin):
         s = s.strip()
         ctx = get_ctx()
         if self.content_language == ctx.locale:
-            translations.add(s, '(dynamic)')
-            reporter.report_debug_info('added to translation memory (dynamic): ', truncate(s))
+            translations.add(s, "(dynamic)")
+            reporter.report_debug_info(
+                "added to translation memory (dynamic): ", truncate(s)
+            )
             return s
         else:
-            translator = gettext.translation("contents", join(self.i18npath, '_compiled'), languages=[ctx.locale],
-                                             fallback=True)
+            translator = gettext.translation(
+                "contents",
+                join(self.i18npath, "_compiled"),
+                languages=[ctx.locale],
+                fallback=True,
+            )
             return translator.gettext(s)
 
     @staticmethod
-    def choose_language(element_list, language, fallback='en', attribute='language'):
+    def choose_language(element_list, language, fallback="en", attribute="language"):
         """
         Will return from list 'element_list' the element with attribute 'attribute'
         set to given 'language'. If none is found, will try to return element with
@@ -251,59 +287,84 @@ class I18NPlugin(Plugin):
     def on_setup_env(self, **extra):
         """Setup `env` for the plugin"""
         # Read configuration
-        self.enabled = self.get_config().get('enable', 'true') in ('true', 'True', '1')
+        self.enabled = self.get_config().get("enable", "true") in ("true", "True", "1")
         if not self.enabled:
-            reporter.report_generic('I18N plugin disabled in configs/i18n.ini')
+            reporter.report_generic("I18N plugin disabled in configs/i18n.ini")
 
-        self.i18npath = self.get_config().get('i18npath', 'i18n')
-        self.url_prefix = self.get_config().get('url_prefix', 'http://localhost/')
+        self.i18npath = self.get_config().get("i18npath", "i18n")
+        self.url_prefix = self.get_config().get("url_prefix", "http://localhost/")
         # whether or not to use a pargraph as smallest translatable unit
-        self.trans_parwise = self.get_config().get('translate_paragraphwise',
-                                                   'false') in ('true', 'True', '1')
-        self.content_language = self.get_config().get('content', 'en')
-        self.env.jinja_env.add_extension('jinja2.ext.i18n')
-        self.env.jinja_env.policies['ext.i18n.trimmed'] = True  # do a .strip()
-        self.env.jinja_env.install_gettext_translations(TemplateTranslator(self.i18npath))
+        self.trans_parwise = self.get_config().get(
+            "translate_paragraphwise", "false"
+        ) in ("true", "True", "1")
+        self.content_language = self.get_config().get("content", "en")
+        self.env.jinja_env.add_extension("jinja2.ext.i18n")
+        self.env.jinja_env.policies["ext.i18n.trimmed"] = True  # do a .strip()
+        self.env.jinja_env.install_gettext_translations(
+            TemplateTranslator(self.i18npath)
+        )
         try:
-            self.translations_languages = self.get_config().get('translations').replace(' ', '').split(',')
-        except AttributeError:
-            raise RuntimeError('Please specify the "translations" configuration option in configs/i18n.ini')
+            self.translations_languages = (
+                self.get_config().get("translations").replace(" ", "").split(",")
+            )
+        except AttributeError as e:
+            raise RuntimeError(
+                "Please specify the 'translations' configuration option "
+                "in configs/i18n.ini"
+            ) from e
 
         if self.content_language not in self.translations_languages:
             self.translations_languages.append(self.content_language)
 
-        self.env.jinja_env.filters['translate'] = self.translate_tag
-        self.env.jinja_env.globals['_'] = self.translate_tag
-        self.env.jinja_env.globals['choose_language'] = self.choose_language
+        self.env.jinja_env.filters["translate"] = self.translate_tag
+        self.env.jinja_env.globals["_"] = self.translate_tag
+        self.env.jinja_env.globals["choose_language"] = self.choose_language
 
     def process_node(self, fields, sections, source, zone, root_path):
         """For a given node (), identify all fields to translate, and add new
         fields to translations memory. Flow blocks are handled recursively."""
         for field in fields:
-            if ('translate' in field.options) \
-                    and (source.alt in (PRIMARY_ALT, self.content_language)) \
-                    and (field.options['translate'] in ('True', 'true', '1', 1)):
+            if (
+                ("translate" in field.options)
+                and (source.alt in (PRIMARY_ALT, self.content_language))
+                and (field.options["translate"] in ("True", "true", "1", 1))
+            ):
                 if field.name in sections.keys():
                     section = sections[field.name]
                     # if paragraphwise, each paragraph is one translatable message,
                     # otherwise each line
-                    chunks = (split_paragraphs(section) if self.trans_parwise
-                              else [x.strip() for x in section if x.strip()])
+                    chunks = (
+                        split_paragraphs(section)
+                        if self.trans_parwise
+                        else [x.strip() for x in section if x.strip()]
+                    )
                     for chunk in chunks:
-                        translations.add(chunk.strip('\r\n'),
-                                         "%s (%s:%s.%s)" % (
-                                             urljoin(self.url_prefix, source.url_path),
-                                             relpath(source.source_filename, root_path),
-                                             zone, field.name)
-                                         )
+                        translations.add(
+                            chunk.strip("\r\n"),
+                            "%s (%s:%s.%s)"
+                            % (
+                                urljoin(self.url_prefix, source.url_path),
+                                relpath(source.source_filename, root_path),
+                                zone,
+                                field.name,
+                            ),
+                        )
 
             if isinstance(field.type, FlowType):
                 if field.name in sections:
                     section = sections[field.name]
-                    for blockname, blockvalue in process_flowblock_data("".join(section)):
+                    for blockname, blockvalue in process_flowblock_data(
+                        "".join(section)
+                    ):
                         flowblockmodel = source.pad.db.flowblocks[blockname]
                         blockcontent = dict(tokenize(blockvalue))
-                        self.process_node(flowblockmodel.fields, blockcontent, source, blockname, root_path)
+                        self.process_node(
+                            flowblockmodel.fields,
+                            blockcontent,
+                            source,
+                            blockname,
+                            root_path,
+                        )
 
     @staticmethod
     def __parse_source_structure(lines):
@@ -320,28 +381,31 @@ class I18NPlugin(Plugin):
         for line in lines:
             stripped_line = line.strip()
             if not stripped_line:  # empty line
-                blocks.append(('raw', '\n'))
+                blocks.append(("raw", "\n"))
                 continue
             # line like "---*" or a new block tag
-            if line_starts_new_block(stripped_line, prev_line) or \
-                    block2re.search(stripped_line):
+            if line_starts_new_block(stripped_line, prev_line) or block2re.search(
+                stripped_line
+            ):
                 count_lines_block = 0
                 is_content = False
-                blocks.append(('raw', line))
+                blocks.append(("raw", line))
             else:
                 count_lines_block += 1
                 match = command_re.search(stripped_line)
-                if count_lines_block == 1 and not is_content and match:  # handle first line, while not in content
+                if (
+                    count_lines_block == 1 and not is_content and match
+                ):  # handle first line, while not in content
                     key, value = match.groups()
-                    blocks.append(('raw', f"{key}:"))
+                    blocks.append(("raw", f"{key}:"))
                     if value:
-                        blocks.append(('raw', ' '))
-                        blocks.append(('translatable', value))
-                    blocks.append(('raw', '\n'))
+                        blocks.append(("raw", " "))
+                        blocks.append(("translatable", value))
+                    blocks.append(("raw", "\n"))
                 else:
                     is_content = True
             if is_content:
-                blocks.append(('translatable', line))
+                blocks.append(("translatable", line))
             prev_line = line
         # join neighbour blocks of same type
         newblocks = []
@@ -355,43 +419,55 @@ class I18NPlugin(Plugin):
     def translate_contents(self):
         """Produce all content file alternatives (=translated pages)
         using the gettext translations available."""
-        for root, _, files in os.walk(os.path.join(self.env.root_path, 'content')):
-            if re.match('content$', root):
+        for root, _, files in os.walk(os.path.join(self.env.root_path, "content")):
+            if re.match("content$", root):
                 continue
-            if 'contents.lr' in files:
-                fn = os.path.join(root, 'contents.lr')
+            if "contents.lr" in files:
+                fn = os.path.join(root, "contents.lr")
                 contents = FileContents(fn)
                 for language in self.translations_languages:
-                    translator = gettext.translation("contents", join(self.i18npath, '_compiled'), languages=[language],
-                                                     fallback=True)
-                    translated_filename = os.path.join(root, "contents+%s.lr" % language)
-                    with contents.open(encoding='utf-8') as file:
+                    translator = gettext.translation(
+                        "contents",
+                        join(self.i18npath, "_compiled"),
+                        languages=[language],
+                        fallback=True,
+                    )
+                    translated_filename = os.path.join(
+                        root, "contents+%s.lr" % language
+                    )
+                    with contents.open(encoding="utf-8") as file:
                         chunks = self.__parse_source_structure(file.readlines())
                     with open(translated_filename, "w") as f:
-                        for content_type, content in chunks:  # see __parse_source_structure
-                            if content_type == 'raw':
+                        for (
+                            content_type,
+                            content,
+                        ) in chunks:  # see __parse_source_structure
+                            if content_type == "raw":
                                 f.write(content)
-                            elif content_type == 'translatable':
+                            elif content_type == "translatable":
                                 if self.trans_parwise:  # translate per paragraph
                                     f.write(self.__trans_parwise(content, translator))
                                 else:
                                     f.write(self.__trans_linewise(content, translator))
                             else:
-                                raise RuntimeError("Unknown chunk type detected, this is a bug")
+                                raise RuntimeError(
+                                    "Unknown chunk type detected, this is a bug"
+                                )
 
     @staticmethod
     def __trans_linewise(content, translator):
         """Translate the chunk linewise."""
         lines = []
-        for line in content.split('\n'):
+        for line in content.split("\n"):
             line_stripped = line.strip()
-            trans_stripline = ''
+            trans_stripline = ""
             if line_stripped:
-                trans_stripline = translator.gettext(line_stripped)  # translate the stripped version
+                trans_stripline = translator.gettext(
+                    line_stripped
+                )  # translate the stripped version
             # and re-inject the stripped translation into original line (not stripped)
-            lines.append(line.replace(line_stripped,
-                                      trans_stripline, 1))
-        return '\n'.join(lines)
+            lines.append(line.replace(line_stripped, trans_stripline, 1))
+        return "\n".join(lines)
 
     @staticmethod
     def __trans_parwise(content, translator):
@@ -399,10 +475,10 @@ class I18NPlugin(Plugin):
         block and re-inject result."""
         result = []
         for paragraph in split_paragraphs(content):
-            stripped = paragraph.strip('\n\r')
+            stripped = paragraph.strip("\n\r")
             paragraph = paragraph.replace(stripped, translator.gettext(stripped))
             result.append(paragraph)
-        return '\n\n'.join(result)
+        return "\n\n".join(result)
 
     def on_after_build(self, builder, build_state, source, prog, **extra):
         if self.enabled and isinstance(source, Page):
@@ -412,23 +488,33 @@ class I18NPlugin(Plugin):
                 pass
             else:
                 fields = source.datamodel.fields
-                sections = dict(tokenize(text.splitlines()))  # {'sectionname':[list of section texts]}
-                self.process_node(fields, sections, source, source.datamodel.id, builder.env.root_path)
+                sections = dict(
+                    tokenize(text.splitlines())
+                )  # {'sectionname':[list of section texts]}
+                self.process_node(
+                    fields, sections, source, source.datamodel.id, builder.env.root_path
+                )
 
     def get_templates_pot_filename(self):
         try:
             return self.pot_templates_filename
         except AttributeError:
-            self.pot_templates_file = tempfile.NamedTemporaryFile(suffix=".pot", prefix="templates-")
+            self.pot_templates_file = tempfile.NamedTemporaryFile(
+                suffix=".pot", prefix="templates-"
+            )
             self.pot_templates_filename = self.pot_templates_file.name
             return self.pot_templates_filename
 
     def on_before_build_all(self, builder, **extra):
         if self.enabled:
-            reporter.report_generic("i18n activated, with main language %s" % self.content_language)
+            reporter.report_generic(
+                "i18n activated, with main language %s" % self.content_language
+            )
             templates_pot_filename = self.get_templates_pot_filename()
-            reporter.report_generic("Parsing templates for i18n into %s" \
-                                    % relpath(templates_pot_filename, builder.env.root_path))
+            reporter.report_generic(
+                "Parsing templates for i18n into %s"
+                % relpath(templates_pot_filename, builder.env.root_path)
+            )
             translations.parse_templates(templates_pot_filename)
             # compile existing po files
             for language in self.translations_languages:
@@ -441,22 +527,29 @@ class I18NPlugin(Plugin):
     def on_after_build_all(self, builder, **extra):
         """Once the build process is over :
         - write the translation template `contents.pot` on the filesystem,
-        - write all translation contents+<language>.po files """
+        - write all translation contents+<language>.po files"""
         if not self.enabled:
             return
-        contents_pot_filename = join(builder.env.root_path, self.i18npath, 'contents.pot')
-        pots = [contents_pot_filename,
-                self.get_templates_pot_filename(),
-                join(builder.env.root_path, self.i18npath, 'plugins.pot')]
+        contents_pot_filename = join(
+            builder.env.root_path, self.i18npath, "contents.pot"
+        )
+        pots = [
+            contents_pot_filename,
+            self.get_templates_pot_filename(),
+            join(builder.env.root_path, self.i18npath, "plugins.pot"),
+        ]
         # write out contents.pot from web site contents
         translations.write_pot(pots[0], self.content_language)
-        reporter.report_generic("%s generated" % relpath(pots[0],
-                                                         builder.env.root_path))
+        reporter.report_generic(
+            "%s generated" % relpath(pots[0], builder.env.root_path)
+        )
         pots = [p for p in pots if os.path.exists(p)]  # only keep existing ones
         if len(pots) > 1:
             translations.merge_pot(pots, contents_pot_filename)
-            reporter.report_generic("Merged POT files %s" % ', '.join(
-                relpath(p, builder.env.root_path) for p in pots))
+            reporter.report_generic(
+                "Merged POT files %s"
+                % ", ".join(relpath(p, builder.env.root_path) for p in pots)
+            )
 
         for language in self.translations_languages:
             po_file = POFile(language, self.i18npath)
