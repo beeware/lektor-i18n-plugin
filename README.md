@@ -18,7 +18,7 @@ The idea of this plugin is to capture the **sentences** or **paragraphs** from y
 #### `configs/i18n.ini`
 
     content = en
-    translations = fr,es,it
+    translations = fr, es, it
     i18npath = i18n
     translate_paragraphwise = False
     url_prefix = https://website_url/
@@ -39,11 +39,10 @@ If you plan to localise your templates as well, you can use
 
     [jinja2: **/templates/**.html]
     encoding = utf-8
-    extensions=jinja2.ext.autoescape,jinja2.ext.with_
 
 ### Translatable fields
 
-In order for a field to be marked as translatable, an option has to be set in the field definition. Both blocks and flowblocks fields are subjects to translations.
+In order for a field to be marked as translatable, an option has to be set in the field definition. Both blocks and flowblocks fields are translatable.
 
 in `flowblocks/*.ini` and/or `models/*.ini`, mark a field as translatable with :
 
@@ -95,7 +94,7 @@ Here again, `body` and `title` will be translated. But `image` and `image_positi
 
 ### Non-english content
 
-Thanx to a limitation of msginit it's not so easy to translate a website with default language set to anything but english.
+Thanks to a limitation of `msginit` it's not so easy to translate a website with default language set to anything but English.
 
 So if your default content language is not english, you will have to edit the first `contents-en.po` file and remove the translations (by hand ?)...
 
@@ -105,25 +104,27 @@ So if your default content language is not english, you will have to edit the fi
 
 #### Lektor
 
-This plugin has been tested with `Lektor 3..0.x`.
+This plugin has been tested with `Lektor 3.0.x`.
 
 #### GetText
 
-Both Gettext and Pybabel are required.  For a Debian/Ubuntu system, this means a simple :
+Both Gettext and Pybabel are required.  
+
+For a Debian/Ubuntu system, this means a simple :
 
     sudo apt-get install gettext python3-babel
 
-On macOS, use a decent package manager, like MacPorts or Homebrew. With Homebrew:
+On macOS, you can use Homebrew to install Gettext:
 
     brew install gettext
 
-and then pip to fetch pybabel:
+and then `pip` to install pybabel:
 
     pip install babel
 
 ### Installation
 
-Very straightforward :
+Run the following to add the **original** plugin:
 
     $ lektor plugins add lektor-i18n
 
@@ -148,11 +149,13 @@ For each translation language (still from the configuration file), a `content-<l
 
 All translation files (`contents-*.po`) are then compiled and merged with the original `contents.lr` files to produce all the `contents-<language>.lr` files in their respective directories.
 
-Due to the way Lektor building system is designed, all these steps happen on every build. This means that sometime, after translating the `contents-*.po` files, it might be required to run the build system twice to see the translation appear in the final HTML files.
+**Note: The updates added to this version of the plugin may alleviate the need to run `build` twice. Verify your translations are working regardless.**
+
+Due to the way Lektor building system is designed, all these steps happen on every build. This means that sometimes, after translating the `contents-*.po` files, it may be required to run the build system twice to see the translation appear in the final HTML files.
 
 ### Project file
 
-It's still the user responsability to modify the project file in order to include the expected languages :
+It's still the user responsibility to modify the project file in order to include the expected languages :
 
     [alternatives.en]
     name = English
