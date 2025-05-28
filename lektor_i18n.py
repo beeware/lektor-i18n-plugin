@@ -95,12 +95,12 @@ class Translations:
     def as_pot(self, content_language):
         """returns a POT version of the translation dictionary"""
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        now += "+%s" % (time.tzname[0])
+        now += f"+{(time.tzname[0])}"
         result = POT_HEADER % {"LANGUAGE": content_language, "NOW": now}
 
         for msg, paths in self.translations.items():
             if msg:  # Generate msgid/msgstr pair only if content exists
-                result += "#: %s\n" % " ".join(paths)
+                result += f"#: {' '.join(paths)}\n"
                 for token, repl in {
                     "\\": "\\\\",
                     "\n": "\\n",
@@ -108,7 +108,7 @@ class Translations:
                     '"': '\\"',
                 }.items():
                     msg = msg.replace(token, repl)
-                result += 'msgid "%s"\n' % msg
+                result += f'msgid "{msg}"\n'
                 result += 'msgstr ""\n\n'
         return result
 
@@ -143,7 +143,7 @@ translations = Translations()  # let's have a singleton
 
 
 class POFile:
-    FILENAME_PATTERN = "contents+%s.po"
+    FILENAME_PATTERN = "contents+{}s.po"
 
     def __init__(self, language, i18npath):
         self.language = language
@@ -151,7 +151,7 @@ class POFile:
 
     def _exists(self):
         """Returns True if <language>.po file exists in i18npath"""
-        filename = self.FILENAME_PATTERN % self.language
+        filename = self.FILENAME_PATTERN.format(self.language)
         return exists(join(self.i18npath, filename))
 
     def _msg_init(self):
@@ -164,7 +164,7 @@ class POFile:
             "-l",
             self.language,
             "-o",
-            self.FILENAME_PATTERN % self.language,
+            self.FILENAME_PATTERN.format(self.language),
             "--no-translator",
         ]
         reporter.report_debug_info("msginit cmd line", cmdline)
@@ -175,7 +175,7 @@ class POFile:
         msgmerge = locate_executable("msgmerge")
         cmdline = [
             msgmerge,
-            self.FILENAME_PATTERN % self.language,
+            self.FILENAME_PATTERN.format(self.language),
             "contents.pot",
             "-U",
             "-N",
@@ -200,7 +200,7 @@ class POFile:
         msgfmt = locate_executable("msgfmt")
         cmdline = [
             msgfmt,
-            self.FILENAME_PATTERN % self.language,
+            self.FILENAME_PATTERN.format(self.language),
             "-o",
             join(locale_dirname, "contents.mo"),
         ]
@@ -341,13 +341,9 @@ class I18NPlugin(Plugin):
                     for chunk in chunks:
                         translations.add(
                             chunk.strip("\r\n"),
-                            "%s (%s:%s.%s)"
-                            % (
-                                urljoin(self.url_prefix, source.url_path),
-                                relpath(source.source_filename, root_path),
-                                zone,
-                                field.name,
-                            ),
+                            f"{urljoin(self.url_prefix, source.url_path)} "
+                            f"({relpath(source.source_filename, root_path)}:"
+                            f"{zone}.{field.name})",
                         )
 
             if isinstance(field.type, FlowType):
@@ -432,9 +428,7 @@ class I18NPlugin(Plugin):
                         languages=[language],
                         fallback=True,
                     )
-                    translated_filename = os.path.join(
-                        root, "contents+%s.lr" % language
-                    )
+                    translated_filename = os.path.join(root, f"contents+{language}s.lr")
                     with contents.open(encoding="utf-8") as file:
                         chunks = self.__parse_source_structure(file.readlines())
                     with open(translated_filename, "w") as f:
@@ -508,12 +502,12 @@ class I18NPlugin(Plugin):
     def on_before_build_all(self, builder, **extra):
         if self.enabled:
             reporter.report_generic(
-                "i18n activated, with main language %s" % self.content_language
+                f"i18n activated, with main language {self.content_language}"
             )
             templates_pot_filename = self.get_templates_pot_filename()
             reporter.report_generic(
-                "Parsing templates for i18n into %s"
-                % relpath(templates_pot_filename, builder.env.root_path)
+                f"Parsing templates for i18n into "
+                f"{relpath(templates_pot_filename, builder.env.root_path)}"
             )
             translations.parse_templates(templates_pot_filename)
             # compile existing po files
@@ -540,15 +534,13 @@ class I18NPlugin(Plugin):
         ]
         # write out contents.pot from web site contents
         translations.write_pot(pots[0], self.content_language)
-        reporter.report_generic(
-            "%s generated" % relpath(pots[0], builder.env.root_path)
-        )
+        reporter.report_generic(f"{relpath(pots[0], builder.env.root_path)} generated")
         pots = [p for p in pots if os.path.exists(p)]  # only keep existing ones
         if len(pots) > 1:
             translations.merge_pot(pots, contents_pot_filename)
             reporter.report_generic(
-                "Merged POT files %s"
-                % ", ".join(relpath(p, builder.env.root_path) for p in pots)
+                f"Merged POT files "
+                f"{', '.join(relpath(p, builder.env.root_path) for p in pots)}"
             )
 
         for language in self.translations_languages:
