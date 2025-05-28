@@ -165,9 +165,3 @@ It's still the user responsability to modify the project file in order to includ
     locale = fr
 
 See [Lektor Documentation](https://www.getlektor.com/docs/content/alts/) for more information.
-
-## Support
-
-This plugin is provided as-is by [NumeriCube](http://numericube.com) a human-sized Paris-based company prodiving tailored services to smart customers.
-
-We will be happy to try to help you with this plugin if need. Just file an issue on our [GitHub account](https://gihub.com/numericube/lektor-i18n-plugin/).
