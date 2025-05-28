@@ -1,3 +1,8 @@
+**This is a fork of the (unmaintained as of May 2025?) [Numericube lektor-i18n-plugin](https://github.com/numericube/lektor-i18n-plugin)**. BeeWare is maintaining (but not
+publishing) this fork for our own usage. It was forked on 28 May 2025, and has had some patches applied.
+
+---
+
 # Lektor i18n plugin
 
 This plugin enables a smarter way to translate a [Lektor](http://getlektor.com) static website using old-good PO files. So you can use your beloved translation processes and tools.
@@ -166,4 +171,3 @@ See [Lektor Documentation](https://www.getlektor.com/docs/content/alts/) for mor
 This plugin is provided as-is by [NumeriCube](http://numericube.com) a human-sized Paris-based company prodiving tailored services to smart customers.
 
 We will be happy to try to help you with this plugin if need. Just file an issue on our [GitHub account](https://gihub.com/numericube/lektor-i18n-plugin/).
-
