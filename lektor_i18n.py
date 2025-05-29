@@ -202,7 +202,7 @@ class POFile:
         msgfmt = locate_executable("msgfmt")
         cmdline = [
             msgfmt,
-            "-f",
+            "--use-fuzzy",
             self.FILENAME_PATTERN.format(self.language),
             "-o",
             join(locale_dirname, "contents.mo"),
