@@ -1,7 +1,6 @@
-**This is a fork of the (unmaintained as of May 2025?) [Numericube lektor-i18n-plugin](https://github.com/numericube/lektor-i18n-plugin)**. BeeWare is maintaining (but not
-publishing) this fork for our own usage. It was forked on 28 May 2025, and has had some patches applied.
+**This is a fork of the (unmaintained as of May 2025?) [Numericube lektor-i18n-plugin](https://github.com/numericube/lektor-i18n-plugin)**. BeeWare is maintaining (but not publishing) this fork for our own usage. It was forked on 28 May 2025, and has had some patches applied.
 
-Initial patches include updates applied by [The Tor Project](https://gitlab.torproject.org/tpo/web/lego/-/blob/b1de03b222fad02369017afce3a12ccd5f8990f2/packages/i18n/lektor_i18n.py) in November 2024.
+Include patches applied by [The Tor Project](https://gitlab.torproject.org/tpo/web/lego/-/blob/b1de03b222fad02369017afce3a12ccd5f8990f2/packages/i18n/lektor_i18n.py) in November 2024 to their own fork.
 
 ---
 
@@ -133,19 +132,19 @@ Then use `pip` to install Babel:
 
 There are two ways to install the plugin. You can use `pip` to manually install it, or update the `.lektorproject` file to have Lektor manage installation.
 
-To manually install the plugin using `pip`, update the version number to match the version you wish to install, and run the following:
+To manually install the plugin using `pip`, update the version number to match the version you wish to install (0.5.0 in these examples), and run the following:
 
-    pip install lektor-i18n@git+https://github.com/beeware/lektor-i18n-plugin@v0.4.5
+    pip install lektor-i18n@git+https://github.com/beeware/lektor-i18n-plugin@v0.5.0
 
 To enable Lektor to handle installation through its plugin mechanism, update the version number to match the version you wish to install, and add the following to your `.lektorproject` file under `[packages]`:
 
-    git+https://github.com/beeware/lektor-i18n-plugin@v0.4.5 =
+    git+https://github.com/beeware/lektor-i18n-plugin@v0.5.0 =
 
 Verify installation by running:
 
     $ lektor plugins list
     ...
-    i18n (version 0.4.5)
+    i18n (version 0.5.0)
     ...
 
 **Note**: If you run `lektor plugins add lektor-i18n`
