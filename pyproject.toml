@@ -33,9 +33,8 @@ extend-select = [
     "E",      # pycodestyle
     "W",      # pycodestyle
     "F",      # pyflakes
-    # "UP",     # pyupgrade
+    "UP",     # pyupgrade
     "B",      # flake8-bugbear
-    # "SIM",    # flake8-simplify
     "YTT",    # flake8-2020
     "ASYNC",  # flake8-async
     "C4",     # flake8-comprehensions

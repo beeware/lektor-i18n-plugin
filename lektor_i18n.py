@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import collections
 import datetime
 import gettext
@@ -27,7 +26,7 @@ block2re = re.compile(r"^###(#+)\s*([^#]*?)\s*###(#+)\s*$")
 
 
 # pylint: disable=too-few-public-methods,redefined-variable-type
-class TemplateTranslator(object):
+class TemplateTranslator:
     def __init__(self, i18npath):
         self.i18npath = i18npath
         self.__lastlang = None
@@ -38,7 +37,7 @@ class TemplateTranslator(object):
         ctx = get_ctx()
         if not ctx:
             self.translator = gettext.GNUTranslations()
-            return super(TemplateTranslator, self).__init__()
+            return super().__init__()
         if not self.__lastlang == ctx.locale:
             self.__lastlang = ctx.locale
             self.translator = gettext.translation(
@@ -483,7 +482,7 @@ class I18NPlugin(Plugin):
         if self.enabled and isinstance(source, Page):
             try:
                 text = source.contents.as_text()
-            except IOError:
+            except OSError:
                 pass
             else:
                 fields = source.datamodel.fields
