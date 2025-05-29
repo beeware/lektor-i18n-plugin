@@ -1,6 +1,4 @@
-**This is a fork of the (unmaintained as of May 2025?) [Numericube lektor-i18n-plugin](https://github.com/numericube/lektor-i18n-plugin)**. BeeWare is maintaining (but not publishing) this fork for our own usage. It was forked on 28 May 2025, and has had some patches applied.
-
-Include patches applied by [The Tor Project](https://gitlab.torproject.org/tpo/web/lego/-/blob/b1de03b222fad02369017afce3a12ccd5f8990f2/packages/i18n/lektor_i18n.py) in November 2024 to their own fork.
+**This is a fork of the (unmaintained as of May 2025?) [Numericube lektor-i18n-plugin](https://github.com/numericube/lektor-i18n-plugin)**. BeeWare is maintaining (but not publishing) this fork for our own usage. It was forked on 28 May 2025, and has had some patches applied; see the [change log](./CHANGELOG.md) for details.
 
 ---
 
