@@ -20,6 +20,14 @@ maintainers = [
     {name="BeeWare Team", email="team@beeware.org"},
 ]
 
+[project.optional-dependencies]
+# Extras used by developers *of* briefcase are pinned to specific versions to
+# ensure environment consistency.
+dev = [
+    "pre-commit == 4.2.0",
+    "setuptools_scm == 8.3.1",
+]
+
 [project.urls]
 Source = 'https://github.com/beeware/lektor-i18n-plugin'
 Tracker = 'https://github.com/beeware/lektor-i18n-plugin/issues'
