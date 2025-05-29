@@ -8,6 +8,7 @@ import tempfile
 import time
 from os.path import exists, join, relpath
 from pprint import PrettyPrinter
+from textwrap import dedent
 from urllib.parse import urljoin
 
 from lektor.context import get_ctx
@@ -23,25 +24,6 @@ from lektor.utils import locate_executable, portable_popen
 command_re = re.compile(r"([a-zA-Z0-9.-_]+):\s*(.*?)?\s*$")
 # derived from lektor.types.flow but allows more dash signs
 block2re = re.compile(r"^###(#+)\s*([^#]*?)\s*###(#+)\s*$")
-
-POT_HEADER = """msgid ""
-msgstr ""
-"Project-Id-Version: PACKAGE VERSION\\n"
-"Report-Msgid-Bugs-To: \\n"
-"POT-Creation-Date: %(NOW)s\\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
-"Language-Team: %(LANGUAGE)s <LL@li.org>\\n"
-"Language: %(LANGUAGE)s\\n"
-"MIME-Version: 1.0\\n"
-"Content-Type: text/plain; charset=UTF-8\\n"
-"Content-Transfer-Encoding: 8bit\\n"
-
-"""
-
-
-def truncate(s, length=32):
-    return (s[:length] + "..") if len(s) > length else s
 
 
 # pylint: disable=too-few-public-methods,redefined-variable-type
@@ -85,7 +67,11 @@ class Translations:
     def add(self, text, source):
         if text not in self.translations.keys():
             self.translations[text] = []
-            reporter.report_debug_info("added to translation memory: ", truncate(text))
+            reporter.report_debug_info(
+                f"Added to translation memory: "
+                f"{f'{text:.32}...' if len(text) > 32 else text}",
+                text,
+            )
         if source not in self.translations[text]:
             self.translations[text].append(source)
 
@@ -96,11 +82,27 @@ class Translations:
         """returns a POT version of the translation dictionary"""
         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
         now += f"+{(time.tzname[0])}"
-        result = POT_HEADER % {"LANGUAGE": content_language, "NOW": now}
+        result = dedent(
+            f"""msgid ""
+            msgstr ""
+            "Project-Id-Version: PACKAGE VERSION\\n"
+            "Report-Msgid-Bugs-To: \\n"
+            "POT-Creation-Date: {now}\\n"
+            "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
+            "Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
+            "Language-Team: {content_language} <LL@li.org>\\n"
+            "Language: {content_language}\\n"
+            "MIME-Version: 1.0\\n"
+            "Content-Type: text/plain; charset=UTF-8\\n"
+            "Content-Transfer-Encoding: 8bit\\n"
+
+            """
+        )
+
+        pot_elements = [result]
 
         for msg, paths in self.translations.items():
             if msg:  # Generate msgid/msgstr pair only if content exists
-                result += f"#: {' '.join(paths)}\n"
                 for token, repl in {
                     "\\": "\\\\",
                     "\n": "\\n",
@@ -108,9 +110,10 @@ class Translations:
                     '"': '\\"',
                 }.items():
                     msg = msg.replace(token, repl)
-                result += f'msgid "{msg}"\n'
-                result += 'msgstr ""\n\n'
-        return result
+                pot_elements.append(
+                    f'#: {" ".join(paths)}\nmsgid "{msg}"\nmsgstr ""\n\n'
+                )
+        return "".join(pot_elements)
 
     def write_pot(self, pot_filename, language):
         if not os.path.exists(os.path.dirname(pot_filename)):
@@ -143,7 +146,7 @@ translations = Translations()  # let's have a singleton
 
 
 class POFile:
-    FILENAME_PATTERN = "contents+{}s.po"
+    FILENAME_PATTERN = "contents+{}.po"
 
     def __init__(self, language, i18npath):
         self.language = language
@@ -245,17 +248,19 @@ class I18NPlugin(Plugin):
     name = "i18n"
     description = "Internationalisation helper"
 
-    def translate_tag(self, s, *args, **kwargs):
+    def translate_tag(self, tag_string, *args, **kwargs):
         if not self.enabled:
-            return s  # no operation
-        s = s.strip()
+            return tag_string  # no operation
+        tag_string = tag_string.strip()
         ctx = get_ctx()
         if self.content_language == ctx.locale:
-            translations.add(s, "(dynamic)")
+            translations.add(tag_string, "(dynamic)")
             reporter.report_debug_info(
-                "added to translation memory (dynamic): ", truncate(s)
+                f"Added to translation memory (dynamic):"
+                f"{f'{tag_string:.32}...' if len(tag_string) > 32 else tag_string}",
+                tag_string,
             )
-            return s
+            return tag_string
         else:
             translator = gettext.translation(
                 "contents",
@@ -263,7 +268,7 @@ class I18NPlugin(Plugin):
                 languages=[ctx.locale],
                 fallback=True,
             )
-            return translator.gettext(s)
+            return translator.gettext(tag_string)
 
     @staticmethod
     def choose_language(element_list, language, fallback="en", attribute="language"):
@@ -428,7 +433,7 @@ class I18NPlugin(Plugin):
                         languages=[language],
                         fallback=True,
                     )
-                    translated_filename = os.path.join(root, f"contents+{language}s.lr")
+                    translated_filename = os.path.join(root, f"contents+{language}.lr")
                     with contents.open(encoding="utf-8") as file:
                         chunks = self.__parse_source_structure(file.readlines())
                     with open(translated_filename, "w") as f:

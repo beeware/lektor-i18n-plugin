@@ -1,19 +1,21 @@
 **This is a fork of the (unmaintained as of May 2025?) [Numericube lektor-i18n-plugin](https://github.com/numericube/lektor-i18n-plugin)**. BeeWare is maintaining (but not
 publishing) this fork for our own usage. It was forked on 28 May 2025, and has had some patches applied.
 
+Initial patches include updates applied by [The Tor Project](https://gitlab.torproject.org/tpo/web/lego/-/blob/b1de03b222fad02369017afce3a12ccd5f8990f2/packages/i18n/lektor_i18n.py) in November 2024.
+
 ---
 
-# Lektor i18n plugin
+# Lektor i18n Plugin
 
-This plugin enables a smarter way to translate a [Lektor](http://getlektor.com) static website using old-good PO files. So you can use your beloved translation processes and tools.
+This plugin enables a smarter way to translate a [Lektor](http://getlektor.com) static website using PO files.
 
-## Principles
-
-The idea of this plugin is to capture the **sentences** or **paragraphs** from your **content** and **templates**, and populate a standard *Gettext* [PO file](https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html). Using usual tools, user can translate these files, very easily. Then the plugin will merge the translations into new [_alternative_](https://www.getlektor.com/docs/content/alts/) content files, providing a translated website.
+The purpose of this plugin is to gather the **sentences** or **paragraphs** from your **content** and **templates**, and populate a standard *gettext* [PO file](https://www.gnu.org/software/gettext/manual/html_node/PO-Files.html). Using various tools, user translation of these files is quite straightforward. The plugin then merges the translations into new [_alternative_](https://www.getlektor.com/docs/content/alts/) content files, allowing for a translated website to be rendered.
 
 ## Configuration
 
 ### Configuration file
+
+You must create a configuration file in the `configs/` directory, named `i18n.ini` that contains the following information.
 
 #### `configs/i18n.ini`
 
@@ -23,19 +25,20 @@ The idea of this plugin is to capture the **sentences** or **paragraphs** from y
     translate_paragraphwise = False
     url_prefix = https://website_url/
 
+The following details what each configuration element does.
 
-Where :
-
-* `content` is the language used to write `contents.lr` files (default is `en`)
-* `translations` is the list of target languages (you want to translate into).
-* `i18npath` is the directory where translation files will be produced/stored (default is `i18n`). This directory needs to be relative to root path.
-* `translate_paragraphwise` specifies whether translation strings are created per line or per paragraph. The latter is helpful for documents wrapping texts at 80 character boundaries. It is set to `False` by default.
-* `url_prefix` is the final url of your lektor website. This provides translators with a way to see the strings in context.
+* `content` is the language used to write `contents.lr` files. Defaults to `en`.
+* `translations` is the list of target languages to which you intend to translate.
+* `i18npath` is the directory where translation files will be produced/stored. This directory needs to be relative to root path. Defaults to `i18n`.
+* `translate_paragraphwise` specifies whether translation strings are created per line or per paragraph. The latter is helpful for documents wrapping texts at 80 character boundaries. Defaults to `False`.
+* `url_prefix` is the final url of your Lektor website. This provides translators with a way to see the strings in context.
 
 #### `babel.cfg`
 
 If you plan to localise your templates as well, you can use
-`{{ _("some string") }}` in your templates. To make this work, babel for Python should be installed (pip install babel; maybe pip3). A `babel.cfg` also has to exist in your project root with this content:
+`{{ _("some string") }}` in your templates. To make this work, Babel for Python should be installed.
+
+A `babel.cfg` must be created in your project root with the following content:
 
     [jinja2: **/templates/**.html]
     encoding = utf-8
@@ -44,7 +47,9 @@ If you plan to localise your templates as well, you can use
 
 In order for a field to be marked as translatable, an option has to be set in the field definition. Both blocks and flowblocks fields are translatable.
 
-in `flowblocks/*.ini` and/or `models/*.ini`, mark a field as translatable with :
+In `flowblocks/*.ini` and/or `models/*.ini`, mark a field as translatable by adding `translate = True` to the `field` element.
+
+For example:
 
     [model]
     name = Page
@@ -60,9 +65,11 @@ in `flowblocks/*.ini` and/or `models/*.ini`, mark a field as translatable with :
     type = markdown
     translate = True
 
-Both `title` and `body` are now translatable. It means that during the parsing phase, all sentences from `title` or `body` fields from the `contents.lr` files with `Page` model will populate the collected PO file.
+Both `title` and `body` are now translatable. This means that during the parsing phase, all sentences from `title` or `body` fields from the `contents.lr` files using the `Page` model will populate the collected PO file translation strings.
 
-Another flowblock example:
+You do not need to translate all fields in a flowblock or model.
+
+For example:
 
     [block]
     name = Section Block
@@ -90,13 +97,13 @@ Another flowblock example:
     choice_labels = Left, Right
     default = right
 
-Here again, `body` and `title` will be translated. But `image` and `image_position` won't.
+As with the previous example, `body` and `title` field content will be translated. However, in this example, `image` and `image_position` will not.
 
 ### Non-english content
 
-Thanks to a limitation of `msginit` it's not so easy to translate a website with default language set to anything but English.
+Due to a limitation of `msginit`, it is difficult to translate a site when the primary language is set to anything but English.
 
-So if your default content language is not english, you will have to edit the first `contents-en.po` file and remove the translations (by hand ?)...
+If your default content language is not English, you will have to edit the first `contents-en.po` file and remove the translations.
 
 ## Installation
 
@@ -104,11 +111,11 @@ So if your default content language is not english, you will have to edit the fi
 
 #### Lektor
 
-This plugin has been tested with `Lektor 3.0.x`.
+This plugin has been tested with Lektor v3.3.12.
 
-#### GetText
+#### gettext and Babel
 
-Both Gettext and Pybabel are required.
+Both gettext and Babel are required.
 
 For a Debian/Ubuntu system, this means a simple :
 
@@ -118,44 +125,55 @@ On macOS, you can use Homebrew to install Gettext:
 
     brew install gettext
 
-and then `pip` to install pybabel:
+Then use `pip` to install Babel:
 
     pip install babel
 
 ### Installation
 
-Run the following to add the **original** plugin:
+There are two ways to install the plugin. You can use `pip` to manually install it, or update the `.lektorproject` file to have Lektor manage installation.
 
-    $ lektor plugins add lektor-i18n
+To manually install the plugin using `pip`, update the version number to match the version you wish to install, and run the following:
 
-Verify installation with a simple :
+    pip install lektor-i18n@git+https://github.com/beeware/lektor-i18n-plugin@v0.4.5
+
+To enable Lektor to handle installation through its plugin mechanism, update the version number to match the version you wish to install, and add the following to your `.lektorproject` file under `[packages]`:
+
+    git+https://github.com/beeware/lektor-i18n-plugin@v0.4.5 =
+
+Verify installation by running:
 
     $ lektor plugins list
     ...
-    lektor-i18n (version 0.1)
+    i18n (version 0.4.5)
     ...
+
+**Note**: If you run `lektor plugins add lektor-i18n`
+it will install the original version of the plugin.
 
 ## Usage
 
-The translation mechanism is hooked into the build system. So translating a website just means building the website.
+The translation mechanism is hooked into the build system.
+Therefore, translating a website happens when building the
+website.
 
     $ lektor build
 
-On first call, a new `i18n` directory (can be changed in configuration file) will be created on top the lektor tree.
+The first time this is run, a new directory (`i18n` is the default) will be created in root of the Lektor tree.
 
 This directory will be populated with a single `contents.pot` file, compiling all the sentences found by the plugin. The list of fields eligible to translation is configured in the models/flows definition with `translate=True` added to each field.
 
-For each translation language (still from the configuration file), a `content-<language>.po` file will be created/updated. These are the files that need to be translated with your preferred tool (like [POEdit](http://poedit.net) or [Transifex](http://transifex.com)).
+For each translation language listed in the configuration file, a `content-xx.po` file (where `xx` is the content language) will be created/updated. These are the files that need to be translated with your preferred tool (like [POEdit](http://poedit.net) or [Transifex](http://transifex.com)).
 
-All translation files (`contents-*.po`) are then compiled and merged with the original `contents.lr` files to produce all the `contents-<language>.lr` files in their respective directories.
+All translation files (`contents-*.po`) are then compiled and merged with the original `contents.lr` files to produce all the `contents-xx.lr` files in their respective directories.
 
-**Note: The updates added to this version of the plugin may alleviate the need to run `build` twice. Verify your translations are working regardless.**
-
-Due to the way Lektor building system is designed, all these steps happen on every build. This means that sometimes, after translating the `contents-*.po` files, it may be required to run the build system twice to see the translation appear in the final HTML files.
+You must run `lektor build` once to generate the list of `contents-xx.po` files. After that, once a translation change is applied to a `contents-xx.po` file, the site must be built again for the changes to be applied to the associated `contents-xx.lr` file. This results in the changes being rendered on the site.
 
 ### Project file
 
-It's still the user responsibility to modify the project file in order to include the expected languages :
+You must modify the `.lektorproject` file to include the expected languages.
+
+For example, to include English as the primary language, along with French, you would include the following:
 
     [alternatives.en]
     name = English
@@ -167,4 +185,4 @@ It's still the user responsibility to modify the project file in order to includ
     url_prefix = /fr/
     locale = fr
 
-See [Lektor Documentation](https://www.getlektor.com/docs/content/alts/) for more information.
+See the [Lektor Documentation](https://www.getlektor.com/docs/content/alts/) for more information.
