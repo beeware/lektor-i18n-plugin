@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.2
+
+* Ensure that PO file merging is performed by file, avoiding changes in PO file order (which cases large PO file deltas)
+
 ## 0.5.1
 
 * Include fuzzy translations in the compiled `.mo` files
