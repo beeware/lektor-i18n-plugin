@@ -181,6 +181,7 @@ class POFile:
             "contents.pot",
             "-U",
             "-N",
+            "--sort-by-file",
             "--backup=simple",
         ]
         reporter.report_debug_info("msgmerge cmd line", cmdline)
