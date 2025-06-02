@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3
+
+* `POT-Creation-Date` in `.pot` file is only updated on initial creation.
+
 ## 0.5.2
 
 * Ensure that PO file merging is performed by file, avoiding changes in PO file order (which cases large PO file deltas)

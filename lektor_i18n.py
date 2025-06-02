@@ -77,28 +77,29 @@ class Translations:
     def __repr__(self):
         return PrettyPrinter(2).pformat(self.translations)
 
-    def as_pot(self, content_language):
+    def as_pot(self, content_language, header):
         """returns a POT version of the translation dictionary"""
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        now += f"+{(time.tzname[0])}"
-        result = dedent(
-            f"""msgid ""
-            msgstr ""
-            "Project-Id-Version: PACKAGE VERSION\\n"
-            "Report-Msgid-Bugs-To: \\n"
-            "POT-Creation-Date: {now}\\n"
-            "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
-            "Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
-            "Language-Team: {content_language} <LL@li.org>\\n"
-            "Language: {content_language}\\n"
-            "MIME-Version: 1.0\\n"
-            "Content-Type: text/plain; charset=UTF-8\\n"
-            "Content-Transfer-Encoding: 8bit\\n"
+        if header is None:
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            now += f"+{(time.tzname[0])}"
+            header = dedent(
+                f"""msgid ""
+                msgstr ""
+                "Project-Id-Version: PACKAGE VERSION\\n"
+                "Report-Msgid-Bugs-To: \\n"
+                "POT-Creation-Date: {now}\\n"
+                "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
+                "Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
+                "Language-Team: {content_language} <LL@li.org>\\n"
+                "Language: {content_language}\\n"
+                "MIME-Version: 1.0\\n"
+                "Content-Type: text/plain; charset=UTF-8\\n"
+                "Content-Transfer-Encoding: 8bit\\n"
 
-            """
-        )
+                """
+            )
 
-        pot_elements = [result]
+        pot_elements = [header]
 
         for msg, paths in self.translations.items():
             if msg:  # Generate msgid/msgstr pair only if content exists
@@ -114,11 +115,24 @@ class Translations:
                 )
         return "".join(pot_elements)
 
+    @staticmethod
+    def read_pot_header(pot_filename):
+        with open(pot_filename) as f:
+            line = None
+            header_lines = []
+            while line != "\n":
+                line = f.readline()
+                header_lines.append(line)
+            return "".join(header_lines)
+
     def write_pot(self, pot_filename, language):
         if not os.path.exists(os.path.dirname(pot_filename)):
             os.makedirs(os.path.dirname(pot_filename))
+            header = None
+        else:
+            header = self.read_pot_header(pot_filename)
         with open(pot_filename, "w") as f:
-            f.write(self.as_pot(language))
+            f.write(self.as_pot(language, header))
 
     @staticmethod
     def merge_pot(from_filenames, to_filename):
