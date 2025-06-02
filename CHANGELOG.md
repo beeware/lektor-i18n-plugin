@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4
+
+* POT content is now sorted by path.
+
 ## 0.5.3
 
 * `POT-Creation-Date` in `.pot` file is only updated on initial creation.

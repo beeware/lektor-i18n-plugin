@@ -101,18 +101,19 @@ class Translations:
 
         pot_elements = [header]
 
-        for msg, paths in self.translations.items():
-            if msg:  # Generate msgid/msgstr pair only if content exists
-                for token, repl in {
-                    "\\": "\\\\",
-                    "\n": "\\n",
-                    "\t": "\\t",
-                    '"': '\\"',
-                }.items():
-                    msg = msg.replace(token, repl)
-                pot_elements.append(
-                    f'#: {" ".join(paths)}\nmsgid "{msg}"\nmsgstr ""\n\n'
-                )
+        # Sort the translations by path, only include a key if content exists.
+        translations_by_path = [
+            (sorted(paths), msg) for msg, paths in self.translations.items() if msg
+        ]
+        for paths, msg in sorted(translations_by_path):
+            for token, repl in {
+                "\\": "\\\\",
+                "\n": "\\n",
+                "\t": "\\t",
+                '"': '\\"',
+            }.items():
+                msg = msg.replace(token, repl)
+            pot_elements.append(f'#: {" ".join(paths)}\nmsgid "{msg}"\nmsgstr ""\n\n')
         return "".join(pot_elements)
 
     @staticmethod
