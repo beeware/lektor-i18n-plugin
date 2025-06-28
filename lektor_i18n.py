@@ -140,7 +140,7 @@ class Translations:
         msgcat = locate_executable("msgcat")
         if msgcat is None:
             msgcat = "/usr/bin/msgcat"
-        cmdline = [msgcat, "--use-first"]
+        cmdline = [msgcat, "--use-first", "-F"]
         cmdline.extend(from_filenames)
         cmdline.extend(("-o", to_filename))
         reporter.report_debug_info("msgcat cmd line", cmdline)
@@ -183,6 +183,7 @@ class POFile:
             "-o",
             self.FILENAME_PATTERN.format(self.language),
             "--no-translator",
+            "-F",
         ]
         reporter.report_debug_info("msginit cmd line", cmdline)
         portable_popen(cmdline, cwd=self.i18npath).wait()
