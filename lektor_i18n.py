@@ -137,13 +137,13 @@ class Translations:
 
     @staticmethod
     def merge_pot(from_filenames, to_filename):
-        msgcat = locate_executable("msgcat")
-        if msgcat is None:
-            msgcat = "/usr/bin/msgcat"
-        cmdline = [msgcat, "-F"]
+        xgettext = locate_executable("xgettext")
+        if xgettext is None:
+            xgettext = "/usr/bin/xgettext"
+        cmdline = [xgettext, "--sort-by-file"]
         cmdline.extend(from_filenames)
         cmdline.extend(("-o", to_filename))
-        reporter.report_debug_info("msgcat cmd line", cmdline)
+        reporter.report_debug_info("xgettext cmd line", cmdline)
         portable_popen(cmdline).wait()
 
     @staticmethod
