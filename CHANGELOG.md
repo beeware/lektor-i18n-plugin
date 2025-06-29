@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.5
+
+* Ensure that POT content is now sorted by path when merging POTs from multiple sources (i.e., templates and content).
+* POT contents now cumulate (i.e., instead of `--use-first`) when merging POTs using `msgcat`, such that source information is preserved from all POT files.
+
 ## 0.5.4
 
 * POT content is now sorted by path.
