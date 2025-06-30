@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.5
+
+* Ensure that POT content is now sorted by path when merging POTs from multiple sources (i.e., templates and content).
+* `xgettext` is used to merge POT files instead of `msgcat`, providing a better header and merging of same strings from different sources.
+
 ## 0.5.4
 
 * POT content is now sorted by path.
