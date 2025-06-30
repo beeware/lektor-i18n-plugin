@@ -155,7 +155,7 @@ class Translations:
         # Inject the creation date back into the produced file
         with open(to_filename, 'r', encoding='utf-8') as f:
             finishedfile_orig = f.read()
-        replacement = r'\1' + date1 + r'\3'
+        replacement = r'\g<1>' + date1 + r'\g<3>'
         finishedcontent = re.sub(pattern, replacement, finishedfile_orig, count=1)
         with open(to_filename, 'w', encoding='utf-8') as f:
             f.write(finishedcontent)
