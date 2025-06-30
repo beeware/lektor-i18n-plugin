@@ -136,7 +136,7 @@ class Translations:
             f.write(self.as_pot(language, header))
 
     @staticmethod
-    def merge_pot(from_filenames, to_filename):
+    def merge_pot(from_filenames, to_filename, projectname):
         # Get the POT Creation Date of the first file and inject it later.
         pattern = r'("POT-Creation-Date:\s*)(\d{4}-\d{2}-\d{2}.*)(\\n")'
         with open(from_filenames[0], 'r', encoding='utf-8') as f:
@@ -572,7 +572,7 @@ class I18NPlugin(Plugin):
         reporter.report_generic(f"{relpath(pots[0], builder.env.root_path)} generated")
         pots = [p for p in pots if os.path.exists(p)]  # only keep existing ones
         if len(pots) > 1:
-            translations.merge_pot(pots, contents_pot_filename)
+            translations.merge_pot(pots, contents_pot_filename, self.env.project.name)
             reporter.report_generic(
                 f"Merged POT files "
                 f"{', '.join(relpath(p, builder.env.root_path) for p in pots)}"
