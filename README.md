@@ -102,6 +102,10 @@ Due to a limitation of `msginit`, it is difficult to translate a site when the p
 
 If your default content language is not English, you will have to edit the first `contents-en.po` file and remove the translations.
 
+### Plural Forms
+
+If you're using `{% pluralize %}` in your Jinja templates, make sure you fill in the plural forms in the PO headers manually, then make sure you have the correct number of `msgstr[x]`s.
+
 ## Installation
 
 ### Prerequisites
