@@ -4,6 +4,7 @@
 
 * Ensure that POT content is now sorted by path when merging POTs from multiple sources (i.e., templates and content).
 * `xgettext` is used to merge POT files instead of `msgcat`, providing a better header and merging of same strings from different sources.
+* The generated PO files will now have a header compatible with GNOME's Translation Editor.
 
 ## 0.5.4
 
