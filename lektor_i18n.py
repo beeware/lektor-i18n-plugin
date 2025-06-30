@@ -137,6 +137,12 @@ class Translations:
 
     @staticmethod
     def merge_pot(from_filenames, to_filename):
+        # Get the POT Creation Date of the first file and inject it later.
+        pattern = r'("POT-Creation-Date:\s*)(\d{4}-\d{2}-\d{2}.*)(\\n")'
+        with open(from_filenames[0], 'r', encoding='utf-8') as f:
+            original_file1 = f.read()
+        date1 = re.search(pattern, original_file1).group(2)
+        
         xgettext = locate_executable("xgettext")
         if xgettext is None:
             xgettext = "/usr/bin/xgettext"
@@ -145,6 +151,14 @@ class Translations:
         cmdline.extend(("-o", to_filename))
         reporter.report_debug_info("xgettext cmd line", cmdline)
         portable_popen(cmdline).wait()
+        
+        # Inject the creation date back into the produced file
+        with open(to_filename, 'r', encoding='utf-8') as f:
+            finishedfile_orig = f.read()
+        replacement = r'\1' + date1 + r'\3'
+        finishedcontent = re.sub(pattern, replacement, finishedfile_orig, count=1)
+        with open(to_filename, 'w', encoding='utf-8') as f:
+            f.write(finishedcontent)
 
     @staticmethod
     def parse_templates(to_filename):
