@@ -146,7 +146,7 @@ class Translations:
         xgettext = locate_executable("xgettext")
         if xgettext is None:
             xgettext = "/usr/bin/xgettext"
-        cmdline = [xgettext, "--sort-by-file", "--package-name=" + self.env.project.name, "--package-version=1.0"]
+        cmdline = [xgettext, "--sort-by-file", "--package-name=" + projectname, "--package-version=1.0"]
         cmdline.extend(from_filenames)
         cmdline.extend(("-o", to_filename))
         reporter.report_debug_info("xgettext cmd line", cmdline)
