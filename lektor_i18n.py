@@ -88,24 +88,25 @@ class Translations:
 
     def as_pot(self, content_language, header):
         """returns a POT version of the translation dictionary"""
-        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
-        now += f"+{(time.tzname[0])}"
-        header = dedent(
-            f"""msgid ""
-            msgstr ""
-            "Project-Id-Version: PACKAGE VERSION\\n"
-            "Report-Msgid-Bugs-To: \\n"
-            "POT-Creation-Date: {now}\\n"
-            "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
-            "Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
-            "Language-Team: {content_language} <LL@li.org>\\n"
-            "Language: {content_language}\\n"
-            "MIME-Version: 1.0\\n"
-            "Content-Type: text/plain; charset=UTF-8\\n"
-            "Content-Transfer-Encoding: 8bit\\n"
+        if header is None:
+            now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+            now += f"+{(time.tzname[0])}"
+            header = dedent(
+                f"""msgid ""
+                msgstr ""
+                "Project-Id-Version: PACKAGE VERSION\\n"
+                "Report-Msgid-Bugs-To: \\n"
+                "POT-Creation-Date: {now}\\n"
+                "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\\n"
+                "Last-Translator: FULL NAME <EMAIL@ADDRESS>\\n"
+                "Language-Team: {content_language} <LL@li.org>\\n"
+                "Language: {content_language}\\n"
+                "MIME-Version: 1.0\\n"
+                "Content-Type: text/plain; charset=UTF-8\\n"
+                "Content-Transfer-Encoding: 8bit\\n"
 
-            """
-        )
+                """
+            )
 
         pot_elements = [header]
 
