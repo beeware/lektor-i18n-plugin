@@ -55,6 +55,14 @@ class TemplateTranslator:
         self.init_translator()
         return self.translator.ngettext(*x)
 
+    def pgettext(self, *x):
+        self.init_translator()
+        return self.translator.pgettext(*x)
+
+    def npgettext(self, *x):
+        self.init_translator()
+        return self.translator.npgettext(*x)
+
 
 class Translations:
     """Memory of translations"""
