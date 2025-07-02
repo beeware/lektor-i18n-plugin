@@ -230,7 +230,7 @@ class POFile:
         ]
         reporter.report_debug_info("msginit cmd line", cmdline)
         portable_popen(cmdline, cwd=self.i18npath).wait()
-        clear_translations(self.FILENAME_PATTERN.format(self.language))
+        clear_translations(os.path.join(self.i18npath, self.FILENAME_PATTERN.format(self.language)))
 
     def _msg_merge(self):
         """Merges an existing <language>.po file with .pot file"""
@@ -618,5 +618,5 @@ class I18NPlugin(Plugin):
             po_file = POFile(language, self.i18npath)
             po_file.generate()
             if language == self.content_language:
-                fill_translations(po_file.FILENAME_PATTERN.format(po_file.language))
+                fill_translations(os.path.join(po_file.i18npath, po_file.FILENAME_PATTERN.format(po_file.language)))
             po_file.reformat()
