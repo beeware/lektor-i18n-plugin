@@ -40,6 +40,11 @@ A `babel.cfg` must be created in your project root with the following content:
     [jinja2: **/templates/**.html]
     encoding = utf-8
 
+#### Whitespace Trimming during Extraction
+
+If you're using `{% trans %}` blocks in your template files, the `trimmed` policy is enabled for Jinja's i18n plugin, so all whitespaces would be trimmed at the beginning and end of those
+blocks.  However, in order for PyBabel's extraction to also work properly this way, one shall add `trimmed = True` to the jinja2 section of the `babel.cfg` configuration file.
+
 ### Translatable fields
 
 In order for a field to be marked as translatable, an option has to be set in the field definition. Both blocks and flowblocks fields are translatable.
@@ -95,13 +100,6 @@ For example:
     default = right
 
 As with the previous example, `body` and `title` field content will be translated. However, in this example, `image` and `image_position` will not.
-
-### Plural Forms
-
-If you're using `{% pluralize %}` in your Jinja templates, make sure you fill in the plural forms in the PO headers manually, then make sure you have the correct number of `msgstr[x]`s.
-In addition, in languages where `msgstr[0]` is not singular, the `msgstr[x]` entries that gets filled in will be incorrect because `msgstr[0]` get filled in with singular and the rest with
-plural -- for that reason, all filling of source language po files except when such source language is English will have such plural entries marked fuzzy; manual editing to clear the fuzzy
-flag and/or correct the plural forms is desried.
 
 ## Installation
 
@@ -166,6 +164,14 @@ For each translation language listed in the configuration file, a `content-xx.po
 All translation files (`contents-*.po`) are then compiled and merged with the original `contents.lr` files to produce all the `contents-xx.lr` files in their respective directories.
 
 You must run `lektor build` once to generate the list of `contents-xx.po` files. After that, once a translation change is applied to a `contents-xx.po` file, the site must be built again for the changes to be applied to the associated `contents-xx.lr` file. This results in the changes being rendered on the site.
+
+### Plural Forms
+
+If you're using `{% pluralize %}` or `ngettext` or the like in your Jinja templates, make sure you fill in the plural forms in the PO headers manually, then make sure you have the correct
+number of `msgstr[x]`s.  The plugin automatically fills `msgstr`s into the PO file of your source lanaguage (which msginit only does for English), but since it doesn't parse plural forms,
+care must be taken to ensure that there are proper plural form `msgstr`s in your source language PO file; in particular, for languages that does not simply use `msgstr[0]` as singular and
+`msgstr[1]` as plural, you must manually alter your PO file to have the correct plurals.  Therefore, all such filled-in source-language plural PO entries that aren't in English are marked
+fuzzy, and the plural forms would need to be adjusted manually.
 
 ### Project file
 
