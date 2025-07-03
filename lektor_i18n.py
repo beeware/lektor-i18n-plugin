@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 import time
-from os.path import exists, join, relpath
+from os.path import exists, join, relpath, basename
 from pprint import PrettyPrinter
 from textwrap import dedent
 from urllib.parse import urljoin
@@ -205,7 +205,7 @@ def fill_translations(po_filepath, save_path=None):
                     entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
                     plural_updated = True
 
-        if plural_updated and 'fuzzy' not in entry.flags:
+        if plural_updated and 'fuzzy' not in entry.flags and 'en' not in basename(po_filepath):
             entry.flags.append('fuzzy')
 
     po.save(save_path or po_filepath)
