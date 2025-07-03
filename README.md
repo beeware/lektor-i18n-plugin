@@ -100,7 +100,8 @@ As with the previous example, `body` and `title` field content will be translate
 
 If you're using `{% pluralize %}` in your Jinja templates, make sure you fill in the plural forms in the PO headers manually, then make sure you have the correct number of `msgstr[x]`s.
 In addition, in languages where `msgstr[0]` is not singular, the `msgstr[x]` entries that gets filled in will be incorrect because `msgstr[0]` get filled in with singular and the rest with
-plural -- for that reason, all filling of source language po files will have such plural entries marked fuzzy; manual editing to clear the fuzzy flag and/or correct the plural forms is desried.
+plural -- for that reason, all filling of source language po files except when such source language is English will have such plural entries marked fuzzy; manual editing to clear the fuzzy
+flag and/or correct the plural forms is desried.
 
 ## Installation
 
