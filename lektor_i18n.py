@@ -193,14 +193,21 @@ def clear_translations(po_filepath, save_path=None):
 
 def fill_translations(po_filepath, save_path=None):
     po = polib.pofile(po_filepath)
+    
     for entry in po:
-        entry.msgstr = entry.msgid
+        if not entry.msgstr:
+            entry.msgstr = entry.msgid
+
+        plural_updated = False
         if entry.msgstr_plural:
             for idx in entry.msgstr_plural:
-                if int(idx) == 0:
-                    entry.msgstr_plural[idx] = entry.msgid
-                else:
-                    entry.msgstr_plural[idx] = entry.msgid_plural
+                if not entry.msgstr_plural[idx]:
+                    entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
+                    plural_updated = True
+
+        if plural_updated and 'fuzzy' not in entry.flags:
+            entry.flags.append('fuzzy')
+
     po.save(save_path or po_filepath)
 
 
