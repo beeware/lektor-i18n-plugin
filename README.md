@@ -169,9 +169,7 @@ You must run `lektor build` once to generate the list of `contents-xx.po` files.
 
 If you're using `{% pluralize %}` or `ngettext` or the like in your Jinja templates, make sure you fill in the plural forms in the PO headers manually, then make sure you have the correct
 number of `msgstr[x]`s.  The plugin automatically fills `msgstr`s into the PO file of your source lanaguage (which msginit only does for English), but since it doesn't parse plural forms,
-care must be taken to ensure that there are proper plural form `msgstr`s in your source language PO file; in particular, for languages that does not simply use `msgstr[0]` as singular and
-`msgstr[1]` as plural, you must manually alter your PO file to have the correct plurals.  Therefore, all such filled-in source-language plural PO entries that aren't in English are marked
-fuzzy, and the plural forms would need to be adjusted manually.
+any non-English PO file will not have its plural message strings filled in.  Those must be done manually in the source-language PO file if simply singular and plural strings does not suffice .
 
 ### Project file
 

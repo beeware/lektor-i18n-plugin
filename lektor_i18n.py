@@ -198,16 +198,16 @@ def fill_translations(po_filepath, save_path=None):
         if not entry.msgstr:
             entry.msgstr = entry.msgid
 
-        plural_updated = False
+        need_plural_fill = False
         if entry.msgstr_plural:
             for idx in entry.msgstr_plural:
                 if not entry.msgstr_plural[idx]:
-                    entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
-                    plural_updated = True
+                    need_plural_fill = True
 
-        if plural_updated and 'fuzzy' not in entry.flags and 'en' not in basename(po_filepath):
-            entry.flags.append('fuzzy')
-
+        if need_plural_fill and '+en.po' in basename(po_filepath):
+            for idx in entry.msgstr_plural:
+                if not entry.msgstr_plural[idx]:
+                    need_plural_fill = True
     po.save(save_path or po_filepath)
 
 
