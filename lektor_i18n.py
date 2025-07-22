@@ -195,24 +195,38 @@ def fill_translations(po_filepath, save_path=None):
     po = polib.pofile(po_filepath)
     
     for entry in po:
+        if not entry.msgstr or entry.fuzzy:
+            entry.msgstr = entry.msgid
+
         # If we fuzzy-matched, we'd need to properly re-fill
         # the entries.  Particularly important is that when
         # you add the plural form of a string... msgmerge seem
         # to fill the plural field with the singular one, and
         # mark it fuzzy...
-        if not entry.msgstr or entry.fuzzy:
-            entry.msgstr = entry.msgid
-
-        need_plural_fill = entry.fuzzy
+        # If it's fuzzy and there's plurals, we need to fill.
+        need_plural_fill = entry.fuzzy and entry.msgstr_plural
+        plurals_empty = True
         if entry.msgstr_plural:
             for idx in entry.msgstr_plural:
                 if not entry.msgstr_plural[idx]:
                     need_plural_fill = True
+                else:
+                    plurals_empty = False
 
         if need_plural_fill and '+en.po' in basename(po_filepath):
             for idx in entry.msgstr_plural:
                 if not entry.msgstr_plural[idx]:
                     entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
+
+        if 'fuzzy' in entry.flags:
+            entry.flags.remove('fuzzy')
+
+        if need_plural_fill and '+en.po' not in basename(po_filepath) and not plurals_empty:
+            # If we need to fill plurals, but they already exist partially, and has not been
+            # filled, fuzzy.
+            if 'fuzzy' not in entry.flags:
+                entry.flags.append('fuzzy')
+
     po.save(save_path or po_filepath)
 
 
