@@ -215,8 +215,7 @@ def fill_translations(po_filepath, save_path=None):
 
         if need_plural_fill and '+en.po' in basename(po_filepath):
             for idx in entry.msgstr_plural:
-                if not entry.msgstr_plural[idx]:
-                    entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
+                entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
 
         if 'fuzzy' in entry.flags:
             entry.flags.remove('fuzzy')
