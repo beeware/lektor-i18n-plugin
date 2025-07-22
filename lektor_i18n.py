@@ -439,16 +439,30 @@ class I18NPlugin(Plugin):
         blocks = []
         count_lines_block = 0  # counting the number of lines of the current block
         is_content = False
+        flow_level = 3
         for line in lines:
             stripped_line = line.strip()
             if not stripped_line:  # empty line
                 blocks.append(("raw", "\n"))
                 continue
-            # line like "---*" or a new block tag
-            if stripped_line == "---" or block2re.search(stripped_line):
+            # New block tag.
+            # The following two ifs will determine the start of a new "block" of content that we can further
+            # parse.  Special care is needed, as the amount of allowed -s dictate whether it's a Markdown heading
+            # or a flow / field seperation.
+            if block2re.search(stripped_line):
                 count_lines_block = 0
                 is_content = False
                 blocks.append(("raw", line))
+                # Count the amount of preceding #s, as that determines the amount of -s allowed
+                # before it gets counted as a Markdown heading.
+                flow_level = len(stripped_line) - len(stripped_line.lstrip('#'))
+            # You're allowed to have between 3 and your maximum allowed number of -s.
+            elif stripped_line == '-' * len(stripped_line) and 3 <= len(stripped_line) <= flow_level:
+                count_lines_block = 0
+                is_content = False
+                blocks.append(("raw", line))
+                # If there's less -s than the flow level, back down on the amount of allowed -s.
+                flow_level = len(stripped_line)
             else:
                 count_lines_block += 1
                 match = command_re.search(stripped_line)
