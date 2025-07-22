@@ -297,20 +297,6 @@ class POFile:
             self._msg_fmt(locale_dirname)
 
 
-def line_starts_new_block(line, prev_line):
-    """
-    Detect a new block in a Lektor document. Blocks are delimited by a line
-    containing 3 or more dashes. This actually matches the definition of a
-    markdown level 2 heading, so this function returns False if no colon was
-    found in the line before, e.g. it isn't a new block with a key: value pair
-    before.
-    """
-    if not prev_line or ":" not in prev_line:
-        return False  # could be a Markdown heading
-    line = line.strip()
-    return line == "-" * len(line) and len(line) >= 3
-
-
 def split_paragraphs(document):
     if isinstance(document, (list, tuple)):
         document = "".join(document)  # list of lines
@@ -453,16 +439,13 @@ class I18NPlugin(Plugin):
         blocks = []
         count_lines_block = 0  # counting the number of lines of the current block
         is_content = False
-        prev_line = None
         for line in lines:
             stripped_line = line.strip()
             if not stripped_line:  # empty line
                 blocks.append(("raw", "\n"))
                 continue
             # line like "---*" or a new block tag
-            if line_starts_new_block(stripped_line, prev_line) or block2re.search(
-                stripped_line
-            ):
+            if stripped_line == "---" or block2re.search(stripped_line):
                 count_lines_block = 0
                 is_content = False
                 blocks.append(("raw", line))
@@ -482,7 +465,6 @@ class I18NPlugin(Plugin):
                     is_content = True
             if is_content:
                 blocks.append(("translatable", line))
-            prev_line = line
         # join neighbour blocks of same type
         newblocks = []
         for type, data in blocks:
