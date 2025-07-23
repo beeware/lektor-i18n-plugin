@@ -181,50 +181,48 @@ class Translations:
 
 translations = Translations()  # let's have a singleton
 
+def clear_entry(entry):
+    entry.msgstr = ''
+    if entry.msgstr_plural:
+        for idx in entry.msgstr_plural:
+            entry.msgstr_plural[idx] = ''
+    if 'fuzzy' in entry.flags:
+        entry.flags.remove('fuzzy')
 
 def clear_translations(po_filepath, save_path=None):
     po = polib.pofile(po_filepath)
     for entry in po:
-        entry.msgstr = ''
-        if entry.msgstr_plural:
-            for idx in entry.msgstr_plural:
-                entry.msgstr_plural[idx] = ''
+        clear_entry(entry)
+
     po.save(save_path or po_filepath)
 
 def fill_translations(po_filepath, save_path=None):
     po = polib.pofile(po_filepath)
     
     for entry in po:
-        if not entry.msgstr or entry.fuzzy:
+        # If we fuzzy-matched, we'd need to properly re-fill
+        # the entries so we clear. Particularly important is
+        # that when you add the plural form of a string...
+        # msgmerge seem to fill the plural field with the
+        # singular one, and mark it fuzzy... incorrect within
+        # source language.
+        if entry.fuzzy:
+            clear_entry(entry)
+
+        # Actually fill in the entries with msgid within the
+        # source language.
+        if not entry.msgstr:
             entry.msgstr = entry.msgid
 
-        # If we fuzzy-matched, we'd need to properly re-fill
-        # the entries.  Particularly important is that when
-        # you add the plural form of a string... msgmerge seem
-        # to fill the plural field with the singular one, and
-        # mark it fuzzy...
-        # If it's fuzzy and there's plurals, we need to fill.
-        need_plural_fill = entry.fuzzy and entry.msgstr_plural
-        plurals_empty = True
+        need_plural_fill = False
         if entry.msgstr_plural:
             for idx in entry.msgstr_plural:
                 if not entry.msgstr_plural[idx]:
                     need_plural_fill = True
-                else:
-                    plurals_empty = False
-
         if need_plural_fill and '+en.po' in basename(po_filepath):
             for idx in entry.msgstr_plural:
-                entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
-
-        if 'fuzzy' in entry.flags:
-            entry.flags.remove('fuzzy')
-
-        if need_plural_fill and '+en.po' not in basename(po_filepath) and not plurals_empty:
-            # If we need to fill plurals, but they already exist partially, and has not been
-            # filled, fuzzy.
-            if 'fuzzy' not in entry.flags:
-                entry.flags.append('fuzzy')
+                if not entry.msgstr_plural[idx]:
+                    entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
 
     po.save(save_path or po_filepath)
 
