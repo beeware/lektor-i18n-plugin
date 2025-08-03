@@ -40,6 +40,15 @@ A `babel.cfg` must be created in your project root with the following content:
     [jinja2: **/templates/**.html]
     encoding = utf-8
 
+If you plan to extract from your templates, and the templates use functionality provided in Jinja2 extensions, specify
+something like the following on an additional line in the config file.  For example, if you use ``do`` statements, the
+configuration file shall be:
+```
+[jinja2: **/templates/**.html]
+encoding = utf-8
+extensions = jinja2.ext.do
+```
+
 #### Whitespace Trimming during Extraction
 
 If you're using `{% trans %}` blocks in your template files, the `trimmed` policy is enabled for Jinja's i18n plugin, so all whitespaces would be trimmed at the beginning and end of those
