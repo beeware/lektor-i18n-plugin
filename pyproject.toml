@@ -24,7 +24,7 @@ maintainers = [
 # Extras used by developers *of* briefcase are pinned to specific versions to
 # ensure environment consistency.
 dev = [
-    "pre-commit == 4.2.0",
+    "pre-commit == 4.3.0",
     "setuptools_scm == 8.3.1",
 ]
 
