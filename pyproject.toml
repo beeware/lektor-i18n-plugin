@@ -25,7 +25,7 @@ maintainers = [
 # ensure environment consistency.
 dev = [
     "pre-commit == 4.3.0",
-    "setuptools_scm == 8.3.1",
+    "setuptools_scm == 9.2.2",
 ]
 
 [project.urls]
