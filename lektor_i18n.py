@@ -5,10 +5,11 @@ import os
 import re
 import tempfile
 import time
-from os.path import exists, join, relpath
+from os.path import exists, join, relpath, basename
 from pprint import PrettyPrinter
 from textwrap import dedent
 from urllib.parse import urljoin
+import polib
 
 from lektor.context import get_ctx
 from lektor.db import Page
@@ -54,6 +55,14 @@ class TemplateTranslator:
     def ngettext(self, *x):
         self.init_translator()
         return self.translator.ngettext(*x)
+
+    def pgettext(self, *x):
+        self.init_translator()
+        return self.translator.pgettext(*x)
+
+    def npgettext(self, *x):
+        self.init_translator()
+        return self.translator.npgettext(*x)
 
 
 class Translations:
@@ -136,15 +145,29 @@ class Translations:
             f.write(self.as_pot(language, header))
 
     @staticmethod
-    def merge_pot(from_filenames, to_filename):
-        msgcat = locate_executable("msgcat")
-        if msgcat is None:
-            msgcat = "/usr/bin/msgcat"
-        cmdline = [msgcat, "--use-first"]
+    def merge_pot(from_filenames, to_filename, projectname):
+        # Get the POT Creation Date of the first file and inject it later.
+        pattern = r'("POT-Creation-Date:\s*)(\d{4}-\d{2}-\d{2}.*)(\\n")'
+        with open(from_filenames[0], 'r', encoding='utf-8') as f:
+            original_file1 = f.read()
+        date1 = re.search(pattern, original_file1).group(2)
+        
+        xgettext = locate_executable("xgettext")
+        if xgettext is None:
+            xgettext = "/usr/bin/xgettext"
+        cmdline = [xgettext, "--sort-by-file", "--package-name=" + projectname, "--package-version=1.0"]
         cmdline.extend(from_filenames)
         cmdline.extend(("-o", to_filename))
-        reporter.report_debug_info("msgcat cmd line", cmdline)
+        reporter.report_debug_info("xgettext cmd line", cmdline)
         portable_popen(cmdline).wait()
+        
+        # Inject the creation date back into the produced file
+        with open(to_filename, 'r', encoding='utf-8') as f:
+            finishedfile_orig = f.read()
+        replacement = r'\g<1>' + date1 + r'\g<3>'
+        finishedcontent = re.sub(pattern, replacement, finishedfile_orig, count=1)
+        with open(to_filename, 'w', encoding='utf-8') as f:
+            f.write(finishedcontent)
 
     @staticmethod
     def parse_templates(to_filename):
@@ -157,6 +180,51 @@ class Translations:
 
 
 translations = Translations()  # let's have a singleton
+
+def clear_entry(entry):
+    entry.msgstr = ''
+    if entry.msgstr_plural:
+        for idx in entry.msgstr_plural:
+            entry.msgstr_plural[idx] = ''
+    if 'fuzzy' in entry.flags:
+        entry.flags.remove('fuzzy')
+
+def clear_translations(po_filepath, save_path=None):
+    po = polib.pofile(po_filepath)
+    for entry in po:
+        clear_entry(entry)
+
+    po.save(save_path or po_filepath)
+
+def fill_translations(po_filepath, save_path=None):
+    po = polib.pofile(po_filepath)
+    
+    for entry in po:
+        # If we fuzzy-matched, we'd need to properly re-fill
+        # the entries so we clear. Particularly important is
+        # that when you add the plural form of a string...
+        # msgmerge seem to fill the plural field with the
+        # singular one, and mark it fuzzy... incorrect within
+        # source language.
+        if entry.fuzzy:
+            clear_entry(entry)
+
+        # Actually fill in the entries with msgid within the
+        # source language.
+        if not entry.msgstr:
+            entry.msgstr = entry.msgid
+
+        need_plural_fill = False
+        if entry.msgstr_plural:
+            for idx in entry.msgstr_plural:
+                if not entry.msgstr_plural[idx]:
+                    need_plural_fill = True
+        if need_plural_fill and '+en.po' in basename(po_filepath):
+            for idx in entry.msgstr_plural:
+                if not entry.msgstr_plural[idx]:
+                    entry.msgstr_plural[idx] = entry.msgid if int(idx) == 0 else entry.msgid_plural
+
+    po.save(save_path or po_filepath)
 
 
 class POFile:
@@ -186,6 +254,8 @@ class POFile:
         ]
         reporter.report_debug_info("msginit cmd line", cmdline)
         portable_popen(cmdline, cwd=self.i18npath).wait()
+        clear_translations(os.path.join(self.i18npath, self.FILENAME_PATTERN.format(self.language)))
+        self.reformat()
 
     def _msg_merge(self):
         """Merges an existing <language>.po file with .pot file"""
@@ -200,6 +270,11 @@ class POFile:
             "--backup=simple",
         ]
         reporter.report_debug_info("msgmerge cmd line", cmdline)
+        portable_popen(cmdline, cwd=self.i18npath).wait()
+    
+    def reformat(self):
+        msgcat = locate_executable("msgcat")
+        cmdline = [msgcat, self.FILENAME_PATTERN.format(self.language), "-o", self.FILENAME_PATTERN.format(self.language)]
         portable_popen(cmdline, cwd=self.i18npath).wait()
 
     def _prepare_locale_dir(self):
@@ -236,20 +311,6 @@ class POFile:
         if self._exists():
             locale_dirname = self._prepare_locale_dir()
             self._msg_fmt(locale_dirname)
-
-
-def line_starts_new_block(line, prev_line):
-    """
-    Detect a new block in a Lektor document. Blocks are delimited by a line
-    containing 3 or more dashes. This actually matches the definition of a
-    markdown level 2 heading, so this function returns False if no colon was
-    found in the line before, e.g. it isn't a new block with a key: value pair
-    before.
-    """
-    if not prev_line or ":" not in prev_line:
-        return False  # could be a Markdown heading
-    line = line.strip()
-    return line == "-" * len(line) and len(line) >= 3
 
 
 def split_paragraphs(document):
@@ -394,19 +455,30 @@ class I18NPlugin(Plugin):
         blocks = []
         count_lines_block = 0  # counting the number of lines of the current block
         is_content = False
-        prev_line = None
+        flow_level = 3
         for line in lines:
             stripped_line = line.strip()
             if not stripped_line:  # empty line
                 blocks.append(("raw", "\n"))
                 continue
-            # line like "---*" or a new block tag
-            if line_starts_new_block(stripped_line, prev_line) or block2re.search(
-                stripped_line
-            ):
+            # New block tag.
+            # The following two ifs will determine the start of a new "block" of content that we can further
+            # parse.  Special care is needed, as the amount of allowed -s dictate whether it's a Markdown heading
+            # or a flow / field seperation.
+            if block2re.search(stripped_line):
                 count_lines_block = 0
                 is_content = False
                 blocks.append(("raw", line))
+                # Count the amount of preceding #s, as that determines the amount of -s allowed
+                # before it gets counted as a Markdown heading.
+                flow_level = len(stripped_line) - len(stripped_line.lstrip('#'))
+            # You're allowed to have between 3 and your maximum allowed number of -s.
+            elif stripped_line == '-' * len(stripped_line) and 3 <= len(stripped_line) <= flow_level:
+                count_lines_block = 0
+                is_content = False
+                blocks.append(("raw", line))
+                # If there's less -s than the flow level, back down on the amount of allowed -s.
+                flow_level = len(stripped_line)
             else:
                 count_lines_block += 1
                 match = command_re.search(stripped_line)
@@ -423,7 +495,6 @@ class I18NPlugin(Plugin):
                     is_content = True
             if is_content:
                 blocks.append(("translatable", line))
-            prev_line = line
         # join neighbour blocks of same type
         newblocks = []
         for type, data in blocks:
@@ -558,7 +629,7 @@ class I18NPlugin(Plugin):
         reporter.report_generic(f"{relpath(pots[0], builder.env.root_path)} generated")
         pots = [p for p in pots if os.path.exists(p)]  # only keep existing ones
         if len(pots) > 1:
-            translations.merge_pot(pots, contents_pot_filename)
+            translations.merge_pot(pots, contents_pot_filename, self.env.project.name)
             reporter.report_generic(
                 f"Merged POT files "
                 f"{', '.join(relpath(p, builder.env.root_path) for p in pots)}"
@@ -567,3 +638,6 @@ class I18NPlugin(Plugin):
         for language in self.translations_languages:
             po_file = POFile(language, self.i18npath)
             po_file.generate()
+            if language == self.content_language:
+                fill_translations(os.path.join(po_file.i18npath, po_file.FILENAME_PATTERN.format(po_file.language)))
+                po_file.reformat()
