@@ -1,3 +1,5 @@
+**Feb 2026: This project has been archived, as we are no longer using Lektor for our website.**
+
 **This is a fork of the (unmaintained as of May 2025?) [Numericube lektor-i18n-plugin](https://github.com/numericube/lektor-i18n-plugin)**. BeeWare is maintaining (but not publishing) this fork for our own usage. It was forked on 28 May 2025, and has had some patches applied; see the [change log](./CHANGELOG.md) for details.
 
 ---
